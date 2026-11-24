@@ -27,15 +27,17 @@ const server = http.createServer(async (req, res) => {
     const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
   let body = chunks.length > 0 ? Buffer.concat(chunks) : undefined;
-   if (body && req.url.startsWith("/groq")) {
+    if (body && req.url.startsWith("/groq")) {
     try {
       const j = JSON.parse(body.toString("utf8"));
       delete j.include;
       delete j.prompt_cache_key;
       delete j.store;
+      if (j.max_tokens && j.max_tokens > 8192) j.max_tokens = 8192;
       body = Buffer.from(JSON.stringify(j));
     } catch {}
   }
+
 
 
 
