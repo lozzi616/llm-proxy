@@ -14,10 +14,10 @@ const server = http.createServer(async (req, res) => {
     targetHost = "https://" + "openrouter.ai";
     newPath = urlPath(req.url, "/openrouter");
   } else if (req.url.startsWith("/gemini")) {
-    targetHost = "https://" + "://googleapis.com";
+    targetHost = "https://" + "generativelanguage" + ".googleapis.com";
     newPath = urlPath(req.url, "/gemini");
   } else if (req.url.startsWith("/groq")) {
-    targetHost = "https://" + "://groq.com";
+    targetHost = "https://" + "api" + ".groq.com";
     newPath = urlPath(req.url, "/groq");
   } else {
     res.writeHead(404);
