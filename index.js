@@ -1,4 +1,5 @@
 const http = require("http");
+const { Readable } = require("stream");
 
 const server = http.createServer(async (req, res) => {
   if (req.url === "/" || req.url === "/health") {
@@ -11,13 +12,13 @@ const server = http.createServer(async (req, res) => {
 
   if (req.url.startsWith("/openrouter")) {
     targetHost = "https://" + "openrouter.ai";
-    newPath = req.url.replace(/^\/openrouter/, "");
+    newPath = urlPath(req.url, "/openrouter");
   } else if (req.url.startsWith("/gemini")) {
     targetHost = "https://" + "://googleapis.com";
-    newPath = req.url.replace(/^\/gemini/, "");
+    newPath = urlPath(req.url, "/gemini");
   } else if (req.url.startsWith("/groq")) {
     targetHost = "https://" + "://groq.com";
-    newPath = req.url.replace(/^\/groq/, "");
+    newPath = urlPath(req.url, "/groq");
   } else {
     res.writeHead(404);
     return res.end("Not found");
@@ -42,20 +43,29 @@ const server = http.createServer(async (req, res) => {
       headers,
       body: (req.method !== "GET" && req.method !== "HEAD") ? body : undefined
     });
-    const respBuf = Buffer.from(await upstream.arrayBuffer());
+
     const respHeaders = {};
     upstream.headers.forEach((v, k) => {
       if (!["content-encoding", "transfer-encoding", "connection"].includes(k.toLowerCase())) {
         respHeaders[k] = v;
       }
     });
+
     res.writeHead(upstream.status, respHeaders);
-    res.end(respBuf);
+    if (upstream.body) {
+      Readable.fromWeb(upstream.body).pipe(res);
+    } else {
+      res.end();
+    }
   } catch (e) {
     res.writeHead(502);
     res.end(String(e));
   }
 });
+
+function urlPath(url, prefix) {
+  return url.slice(prefix.length) || "/";
+}
 
 server.listen(process.env.PORT || 8000, "0.0.0.0", () => {
   console.log("Listening");
