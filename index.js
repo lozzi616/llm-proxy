@@ -24,9 +24,17 @@ const server = http.createServer(async (req, res) => {
     return res.end("Not found");
   }
 
-  const chunks = [];
+    const chunks = [];
   for await (const chunk of req) chunks.push(chunk);
-  const body = chunks.length > 0 ? Buffer.concat(chunks) : undefined;
+  let body = chunks.length > 0 ? Buffer.concat(chunks) : undefined;
+  if (body && req.url.startsWith("/groq")) {
+    try {
+      const j = JSON.parse(body.toString("utf8"));
+      delete j.include;
+      body = Buffer.from(JSON.stringify(j));
+    } catch {}
+  }
+
 
   const headers = {};
   for (const [k, v] of Object.entries(req.headers)) {
